@@ -85,7 +85,9 @@ jobs:
         # include more ciphers with use_insecure_cipher
         #proxy_use_insecure_cipher: # optional
         # execute commands
-        script: touch ittvoltam.jee # optional
+        script: |
+          touch ittvoltam.jee
+          touch multiline.jee
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
