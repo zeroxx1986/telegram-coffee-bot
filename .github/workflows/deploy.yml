@@ -89,7 +89,6 @@ jobs:
         # execute commands
         script: |
           touch ittvoltam.jee
-          echo $DEC_KEY > ittvoltam.jee
           touch multiline.jee
         # stop script after first failure
         script_stop: true # optional
@@ -107,3 +106,7 @@ jobs:
       run: |
         echo Add other actions to build,
         echo test, and deploy your project.
+
+    # Runs a single command using the runners shell
+    - name: Run da python
+      run: python main.py
