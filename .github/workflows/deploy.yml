@@ -109,6 +109,8 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Run da python
+      env:
+        DEC_KEY: ${{ secrets.BOT_DEC_KEY }}
       run: |
         pip install -r requirements.txt
         python main.py
