@@ -109,4 +109,6 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Run da python
-      run: python main.py
+      run: |
+        pip install -r requirements.txt
+        python main.py
