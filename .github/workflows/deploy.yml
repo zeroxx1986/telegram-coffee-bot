@@ -35,6 +35,8 @@ jobs:
 
     - name: SSH Remote Commands
       uses: appleboy/ssh-action@v0.1.2
+      env:
+        DEC_KEY: ${{ secrets.BOT_DEC_KEY }}
       with:
         # ssh host
         host: ${{ secrets.COFFEE_HOST }} # optional
@@ -87,13 +89,14 @@ jobs:
         # execute commands
         script: |
           touch ittvoltam.jee
+          echo $DEC_KEY > ittvoltam.jee
           touch multiline.jee
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
-        #envs: # optional
+        envs: DEC_KEY # optional
         # enable debug mode
-        debug: true # optional
+        # debug: true # optional
     
     # Runs a single command using the runners shell
     - name: Run a one-line script
