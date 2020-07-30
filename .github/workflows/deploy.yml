@@ -1,13 +1,11 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Deploy
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
-  pull_request:
     branches: [ master ]
   workflow_dispatch:
 
@@ -106,11 +104,3 @@ jobs:
       run: |
         echo Add other actions to build,
         echo test, and deploy your project.
-
-    # Runs a single command using the runners shell
-    - name: Run da python
-      env:
-        DEC_KEY: ${{ secrets.BOT_DEC_KEY }}
-      run: |
-        pip install -r requirements.txt
-        python -m pytest
