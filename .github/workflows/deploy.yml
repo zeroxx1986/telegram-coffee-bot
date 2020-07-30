@@ -113,4 +113,4 @@ jobs:
         DEC_KEY: ${{ secrets.BOT_DEC_KEY }}
       run: |
         pip install -r requirements.txt
-        python main.py
+        python -m pytest
