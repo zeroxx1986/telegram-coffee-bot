@@ -1,5 +1,5 @@
-import bot
+import bot as Bot
 
-bot = bot.Get()
+bot = Bot.Get()
 
 print(bot.get_me())

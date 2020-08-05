@@ -1,7 +1,7 @@
-import bot
+import bot as Bot
 
 def test_bot():
-    bot = bot.Get()
+    bot = Bot.Get()
     bot_info = bot.get_me()
     print(dir(bot_info))
     if bot_info != None:
