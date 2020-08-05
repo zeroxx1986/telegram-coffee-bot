@@ -1,8 +1,7 @@
-import telegram
-from creds import creds
+import bot
 
 def test_bot():
-    bot = telegram.Bot(token=creds.Telegram_API_Key())
+    bot = bot.Get()
     bot_info = bot.get_me()
     print(dir(bot_info))
     if bot_info != None:
