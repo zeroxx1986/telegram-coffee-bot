@@ -34,7 +34,7 @@ jobs:
     - name: SSH Remote Commands
       uses: appleboy/ssh-action@v0.1.2
       env:
-        DEC_KEY: ${{ secrets.BOT_DEC_KEY }}
+        TELEGRAM_BOT_API_KEY: ${{ secrets.TELEGRAM_BOT_API_KEY }}
       with:
         # ssh host
         host: ${{ secrets.COFFEE_HOST }} # optional
@@ -91,7 +91,7 @@ jobs:
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
-        envs: DEC_KEY # optional
+        envs: TELEGRAM_BOT_API_KEY # optional
         # enable debug mode
         # debug: true # optional
     
