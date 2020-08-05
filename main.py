@@ -1,6 +1,5 @@
-import telegram
-from creds import creds
+import bot
 
-bot = telegram.Bot(token=creds.Telegram_API_Key())
+bot = bot.Get()
 
 print(bot.get_me())
