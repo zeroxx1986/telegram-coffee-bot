@@ -1,4 +1,4 @@
-import bot as Bot
+from bot import bot as Bot
 
 def test_bot():
     bot = Bot.Get()
