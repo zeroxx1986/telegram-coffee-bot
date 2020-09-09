@@ -89,7 +89,7 @@ jobs:
         #proxy_use_insecure_cipher: # optional
         # execute commands
         script: |
-          ps aux | egrep '[p]ython main.py' | awk '{print $2}' | xargs kill -9
+          ./kill_python.sh
           rm -rf telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
           cd telegram-coffee-bot
