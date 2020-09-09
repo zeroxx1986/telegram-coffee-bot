@@ -89,8 +89,10 @@ jobs:
         #proxy_use_insecure_cipher: # optional
         # execute commands
         script: |
-          touch ittvoltam.jee
-          touch multiline.jee
+          rm -rf /tmp/coffee-bot
+          mkdir /tmp/coffee-bot
+          cd /tmp/coffee-bot
+          git clone https://github.com/zeroxx1986/telegram-coffee-bot.git .
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
