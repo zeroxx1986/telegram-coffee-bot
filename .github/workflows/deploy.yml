@@ -101,7 +101,7 @@ jobs:
         # pass environment variable to shell script
         envs: TELEGRAM_BOT_API_KEY # optional
         # enable debug mode
-        # debug: true # optional
+        debug: true # optional
     
     # Runs a single command using the runners shell
     - name: Run a one-line script
