@@ -89,10 +89,12 @@ jobs:
         #proxy_use_insecure_cipher: # optional
         # execute commands
         script: |
-          rm -rf /tmp/coffee-bot
-          mkdir /tmp/coffee-bot
-          cd /tmp/coffee-bot
-          git clone https://github.com/zeroxx1986/telegram-coffee-bot.git .
+          ps aux | grep python | awk '{print $2}' | xargs kill -9
+          rm -rf telegram-coffee-bot
+          git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
+          cd telegram-coffee-bot
+          pip install -r requirements.txt
+          python main.py &
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
