@@ -90,8 +90,7 @@ jobs:
         # execute commands
         script: |
           cd /home/coffee
-          ps aux | egrep '[p]ython main.py' > wtf.txt
-          ./kill_python.sh
+          pkill -9 python
           rm -rf telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
           cd telegram-coffee-bot

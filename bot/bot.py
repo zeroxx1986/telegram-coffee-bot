@@ -27,6 +27,8 @@ def Init():
 
 def echo(update, context):
     logger = logging.getLogger(__name__)
+    if update.message.text == None:
+        return
     logger.info(update.message.text)
     # logger.info(dir(update.message))
     if (datetime.now(timezone.utc) - update.message.date).total_seconds() < 10:
