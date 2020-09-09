@@ -94,8 +94,11 @@ jobs:
           rm -rf telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
           cd telegram-coffee-bot
+          touch nohup.out
+          touch nohup.err
           pip install -r requirements.txt
-          python main.py &
+          nohup python main.py > nohup.out 2> nohup.err < /dev/null &
+          echo 'Done'
         # stop script after first failure
         script_stop: true # optional
         # pass environment variable to shell script
