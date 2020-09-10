@@ -87,6 +87,8 @@ jobs:
         #proxy_cipher: # optional
         # include more ciphers with use_insecure_cipher
         #proxy_use_insecure_cipher: # optional
+        # pass environment variable to shell script
+        envs: TELEGRAM_BOT_API_KEY # optional
         # execute commands
         script: |
           cd /home/coffee
@@ -102,8 +104,6 @@ jobs:
           echo 'Done'
         # stop script after first failure
         script_stop: true # optional
-        # pass environment variable to shell script
-        envs: TELEGRAM_BOT_API_KEY # optional
         # enable debug mode
         debug: true # optional
     
