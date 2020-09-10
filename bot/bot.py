@@ -1,33 +1,152 @@
 import telegram
-from telegram.ext import Updater, MessageHandler, Filters
+from telegram.ext import Updater, MessageHandler, CommandHandler, Filters
 import os
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import requests
 from lxml import html
 import json
 import re
+from threading import Timer
 
 updater = None
 dispatcher = None
+logger = logging.getLogger(__name__)
+
+coffeeTime = None
+subscribers = []
+t10 = t5 = t0 = None
 
 def Init():
-    global updater, dispatcher
+    global updater, dispatcher, logger
     if updater is None:
         updater = Updater(token=os.environ['TELEGRAM_BOT_API_KEY'], use_context=True)
         dispatcher = updater.dispatcher
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
         
-        echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-        dispatcher.add_handler(echo_handler)
+        gag_handler = MessageHandler(Filters.text & (~Filters.command), gag)
+        coffee_handler = CommandHandler('coffee', coffee)
+        sub_handler = CommandHandler('sub', sub)
+        unsub_handler = CommandHandler('unsub', unsub)
+        help_handler = CommandHandler('help', help)
+
+        dispatcher.add_handler(gag_handler)
+        dispatcher.add_handler(coffee_handler)
+        dispatcher.add_handler(sub_handler)
+        dispatcher.add_handler(unsub_handler)
+        dispatcher.add_handler(help_handler)
         updater.start_polling()
-        logger = logging.getLogger(__name__)
         logger.info("Starting bot...")
         return updater
     return None
 
-def echo(update, context):
-    logger = logging.getLogger(__name__)
+def sendNotification(bot, message):
+    global logger, subscribers
+    logger.info("HERE")
+    for subscriber in subscribers:
+        bot.send_message(chat_id=subscriber,
+                         parse_mode=telegram.ParseMode.MARKDOWN_V2,
+                         text=message)
+
+def help(update, context):
+    global logger
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                                 parse_mode=telegram.ParseMode.MARKDOWN_V2,
+                                 text='''
+Hey fellow Coffee Lover\! Here are the commands you can use:
+
+`/coffee <time>` \- set a time for coffee\! Can be relative \(e\.g\. 1\.5h\) or absolute \(10:00\)
+`/sub` \- subscribe to the coffee event\!
+`/unsub` \- unsubscribe from the coffee event :\(
+`/cancel` \- cancel the coffee event :\(\(\(
+`/quote` \- see a very helpful coffee quote to help you survive until Coffee Time\!\!\!
+`/help` \- see this very helpful helping help\.halp\.haaaalp\!ha\#aA@2\.D\.\.\. rebooting in 3\.\.2\.\.1\.\. 🖖🏻
+                                 ''')
+
+def coffee(update, context):
+    global logger, coffeeTime, subscribers, t10, t5, t0
+    logger.info("Command received")
+    logger.info(update.message.text)
+    if update.message.text == '/coffee':
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 parse_mode=telegram.ParseMode.MARKDOWN_V2,
+                                 text="Usage: `/coffee <time>`\nExample:\n`/coffee 1h` \- Coffee in 1 hour\n`/coffee 12:00` \- Coffee at noon \(24h format\)")
+        return
+    
+    now = datetime.now()
+    relTime = re.match('/coffee (\d+[,.]?\d*[hm])', update.message.text.lower())
+    absTime = re.match('/coffee (\d+):(\d+)', update.message.text.lower())
+    
+    if relTime is not None:
+        relTime = relTime.group(1).replace(',', '.')
+        logger.info(relTime)
+        if relTime[-1:] == 'h':
+            coffeeTime = now + timedelta(hours=float(relTime[:-1]))
+            logger.info("Coffee time: {}".format(coffeeTime))
+        if relTime[-1:] == 'm':
+            coffeeTime = now + timedelta(minutes=float(relTime[:-1]))
+            logger.info("Coffee time: {}".format(coffeeTime))
+    
+    elif absTime is not None:
+        coffeeTime = datetime(now.year, now.month, now.day, int(absTime[1]), int(absTime[2]))
+        if coffeeTime < now:
+            coffeeTime = coffeeTime + timedelta(days=1)
+        logger.info(coffeeTime)
+    
+    if coffeeTime:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 parse_mode=telegram.ParseMode.MARKDOWN_V2,
+                                 text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
+        # clear subscribers & add sender
+        subscribers = []
+        subscribers.append(update.effective_user.id)
+        subscribers.append(update.effective_chat.id)
+        subscribers = list(dict.fromkeys(subscribers))
+        # set T-10 notification timer
+        if t10 is not None:
+            t10.cancel()
+            t10 = None
+        secondsUntilNotification = ((coffeeTime - now) - timedelta(minutes=10)).total_seconds()
+        logger.info("Seconds until T-10: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t10 = Timer(secondsUntilNotification, sendNotification, (context.bot, "10 minutes until Coffee Time\!"))
+            t10.start()
+        # set T-5 notification timer
+        if t5 is not None:
+            t5.cancel()
+            t5 = None
+        secondsUntilNotification = ((coffeeTime - now) - timedelta(minutes=5)).total_seconds()
+        logger.info("Seconds until T-5: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t5 = Timer(secondsUntilNotification, sendNotification, (context.bot, "5 minutes until Coffee Time\!"))
+            t5.start()
+        # set T-0 notification timer
+        if t0 is not None:
+            t0.cancel()
+            t0 = None
+        secondsUntilNotification = (coffeeTime - now).total_seconds()
+        logger.info("Seconds until T-0: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t0 = Timer(secondsUntilNotification, sendNotification, (context.bot, "Coffee Time\! ☕☕☕"))
+            t0.start()
+
+def sub(update, context):
+    global logger, subscribers
+    logger.info("Command received")
+    subscribers.append(update.effective_user.id)
+    subscribers = list(dict.fromkeys(subscribers))
+    context.bot.send_message(chat_id=update.effective_user.id,
+                             text="You are subscribed for the next Coffee Time! 😄")
+
+def unsub(update, context):
+    global logger, subscribers
+    logger.info("Command received")
+    subscribers.remove(update.effective_user.id)
+    context.bot.send_message(chat_id=update.effective_user.id,
+                             text="You are unsubscribed from the next coffee event 😥")
+
+def gag(update, context):
+    global logger
     if update.message.text == None:
         return
     logger.info(update.message.text)
