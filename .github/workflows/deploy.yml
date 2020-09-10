@@ -93,6 +93,7 @@ jobs:
         script: |
           cd /home/coffee
           declare -x > envs.txt
+          ps aux > wtf.txt
           pkill -9 python
           rm -rf telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
