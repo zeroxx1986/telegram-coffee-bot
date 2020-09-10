@@ -28,12 +28,14 @@ def Init():
         coffee_handler = CommandHandler('coffee', coffee)
         sub_handler = CommandHandler('sub', sub)
         unsub_handler = CommandHandler('unsub', unsub)
+        cancel_handler = CommandHandler('cancel', cancel)
         help_handler = CommandHandler('help', help)
 
         dispatcher.add_handler(gag_handler)
         dispatcher.add_handler(coffee_handler)
         dispatcher.add_handler(sub_handler)
         dispatcher.add_handler(unsub_handler)
+        dispatcher.add_handler(cancel_handler)
         dispatcher.add_handler(help_handler)
         updater.start_polling()
         logger.info("Starting bot...")
@@ -144,6 +146,22 @@ def unsub(update, context):
     subscribers.remove(update.effective_user.id)
     context.bot.send_message(chat_id=update.effective_user.id,
                              text="You are unsubscribed from the next coffee event 😥")
+
+def cancel(update, context):
+    global logger, subscribers, t10, t5, t0, coffeeTime
+    logger.info("Command received")
+    sendNotification(context.bot, "Coffee time cancelled! 💔😭")
+    subscribers = []
+    if t10 is not None:
+        t10.cancel()
+        t10 = None
+    if t5 is not None:
+        t5.cancel()
+        t5 = None
+    if t0 is not None:
+        t0.cancel()
+        t0 = None
+    coffeeTime = None
 
 def gag(update, context):
     global logger
