@@ -96,7 +96,7 @@ jobs:
           declare -x > envs.txt
           ps aux > wtf.txt
           pkill -9 python
-          rm -rf telegram-coffee-bot
+          rm -rf /home/coffee/telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
           cd telegram-coffee-bot
           touch nohup.out
@@ -107,7 +107,7 @@ jobs:
         # stop script after first failure
         script_stop: true # optional
         # enable debug mode
-        debug: true # optional
+        # debug: true # optional
     
     # Runs a single command using the runners shell
     #- name: Run a one-line script
