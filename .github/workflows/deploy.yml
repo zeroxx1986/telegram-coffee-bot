@@ -93,9 +93,7 @@ jobs:
         script: |
           export TELEGRAM_BOT_API_KEY=$TELEGRAM_BOT_API_KEY
           cd /home/coffee
-          declare -x > envs.txt
-          ps aux > wtf.txt
-          pkill -9 python
+          pkill -9 python || true
           rm -rf /home/coffee/telegram-coffee-bot
           git clone https://github.com/zeroxx1986/telegram-coffee-bot.git
           cd telegram-coffee-bot
