@@ -8,6 +8,8 @@ from lxml import html
 import json
 import re
 from threading import Timer
+from bot.quotes import quotes
+import random
 
 updater = None
 dispatcher = None
@@ -30,6 +32,7 @@ def Init():
         unsub_handler = CommandHandler('unsub', unsub)
         cancel_handler = CommandHandler('cancel', cancel)
         help_handler = CommandHandler('help', help)
+        quote_handler = CommandHandler('quote', quote)
 
         dispatcher.add_handler(gag_handler)
         dispatcher.add_handler(coffee_handler)
@@ -37,6 +40,7 @@ def Init():
         dispatcher.add_handler(unsub_handler)
         dispatcher.add_handler(cancel_handler)
         dispatcher.add_handler(help_handler)
+        dispatcher.add_handler(quote_handler)
         updater.start_polling()
         logger.info("Starting bot...")
         return updater
@@ -162,6 +166,12 @@ def cancel(update, context):
         t0.cancel()
         t0 = None
     coffeeTime = None
+
+def quote(update, context):
+    global logger
+    logger.info("Command received")
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=random.choice(quotes()))
 
 def gag(update, context):
     global logger
