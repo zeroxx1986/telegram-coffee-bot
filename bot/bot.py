@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import requests
 from lxml import html
 import json
+import re
 
 updater = None
 dispatcher = None
@@ -33,12 +34,21 @@ def echo(update, context):
     # logger.info(dir(update.message))
     if (datetime.now(timezone.utc) - update.message.date).total_seconds() < 10:
         # recent message, let's deal with it!
-        if update.message.text.startswith('https://9gag.com'):
-            url = update.message.text
+        if 'https://9gag.com' in update.message.text:
+            url = re.match('.*(https://(www\.)?9gag\.com/.*?)(\s|\n|$)', update.message.text)
+            if url is None or len(url.groups()) != 3:
+                return
+            url = url.group(1)
             headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
             response = requests.get(url, headers=headers)
             tree = html.fromstring(response.content)
+
+            title = tree.xpath('//meta[@property="og:title"]/@content')
+            if len(title) > 0:
+                title = title[0]
+            else:
+                title = None
 
             # determine if image or video
             gagType = tree.xpath('//meta[@property="og:description"]/@content')
@@ -59,6 +69,7 @@ def echo(update, context):
                     logger.info(video)
                     context.bot.send_video(chat_id=update.effective_chat.id, 
                                         reply_to_message_id=update.effective_message.message_id,
+                                        caption=title,
                                         video=video)
             else:
                 # image
@@ -68,5 +79,6 @@ def echo(update, context):
                 if len(image) > 0:
                     context.bot.send_photo(chat_id=update.effective_chat.id, 
                                         reply_to_message_id=update.effective_message.message_id,
+                                        caption=title,
                                         photo=image[0])
 
