@@ -73,18 +73,18 @@ def coffee(update, context):
     global logger, coffeeTime, subscribers, t10, t5, t0
     logger.info("Command received")
     logger.info(update.message.text)
-    if update.message.text == '/coffee':
+    if update.message.text == '/coffee' or update.message.text == '/coffee@kvbotbotbot':
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  parse_mode=telegram.ParseMode.MARKDOWN_V2,
                                  text="Usage: `/coffee <time>`\nExample:\n`/coffee 1h` \- Coffee in 1 hour\n`/coffee 12:00` \- Coffee at noon \(24h format\)")
         return
     
     now = datetime.now()
-    relTime = re.match('/coffee (\d+[,.]?\d*[hm])', update.message.text.lower())
-    absTime = re.match('/coffee (\d+):(\d+)', update.message.text.lower())
+    relTime = re.match('/coffee(@kvbotbotbot)? (\d+[,.]?\d*[hm])', update.message.text.lower())
+    absTime = re.match('/coffee(@kvbotbotbot)? (\d+):(\d+)', update.message.text.lower())
     
     if relTime is not None:
-        relTime = relTime.group(1).replace(',', '.')
+        relTime = relTime.group(2).replace(',', '.')
         logger.info(relTime)
         if relTime[-1:] == 'h':
             coffeeTime = now + timedelta(hours=float(relTime[:-1]))
@@ -94,7 +94,7 @@ def coffee(update, context):
             logger.info("Coffee time: {}".format(coffeeTime))
     
     elif absTime is not None:
-        coffeeTime = datetime(now.year, now.month, now.day, int(absTime[1]), int(absTime[2]))
+        coffeeTime = datetime(now.year, now.month, now.day, int(absTime[2]), int(absTime[3]))
         if coffeeTime < now:
             coffeeTime = coffeeTime + timedelta(days=1)
         logger.info(coffeeTime)
