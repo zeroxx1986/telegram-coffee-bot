@@ -10,41 +10,81 @@ import re
 from threading import Timer
 from bot.quotes import quotes
 import random
+import shelve
 
 updater = None
 dispatcher = None
 logger = logging.getLogger(__name__)
 
 coffeeTime = None
+coffeeChatID = None
 subscribers = []
 t10 = t5 = t0 = None
+d = None
+
+def restore_data(bot):
+    global coffeeTime, coffeeChatID, subscribers, t10, t5, t0, d
+
+    d = shelve.open('coffee.db.bot')
+
+    if 'coffeeTime' in d:
+        coffeeTime = d['coffeeTime']
+    if 'coffeeChatID' in d:
+        coffeeChatID = d['coffeeChatID']
+    if 'subscribers' in d:
+        subscribers = d['subscribers']
+
+    if coffeeTime is not None:
+        now = datetime.now()
+        
+        # set T-10 notification timer
+        secondsUntilNotification = ((coffeeTime - now) - timedelta(minutes=10)).total_seconds()
+        logger.info("Seconds until T-10: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t10 = Timer(secondsUntilNotification, sendNotification, (bot, "10 minutes until Coffee Time\!"))
+            t10.start()
+
+        # set T-5 notification timer
+        secondsUntilNotification = ((coffeeTime - now) - timedelta(minutes=5)).total_seconds()
+        logger.info("Seconds until T-5: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t5 = Timer(secondsUntilNotification, sendNotification, (bot, "5 minutes until Coffee Time\!"))
+            t5.start()
+
+        # set T-0 notification timer
+        secondsUntilNotification = (coffeeTime - now).total_seconds()
+        logger.info("Seconds until T-0: {}".format(secondsUntilNotification))
+        if secondsUntilNotification > 0:
+            t0 = Timer(secondsUntilNotification, sendNotification, (bot, "Coffee Time\! ☕☕☕"))
+            t0.start()
 
 def Init():
     global updater, dispatcher, logger
-    if updater is None:
-        updater = Updater(token=os.environ['TELEGRAM_BOT_API_KEY'], use_context=True)
-        dispatcher = updater.dispatcher
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-        
-        gag_handler = MessageHandler(Filters.text & (~Filters.command), gag)
-        coffee_handler = CommandHandler('coffee', coffee)
-        sub_handler = CommandHandler('sub', sub)
-        unsub_handler = CommandHandler('unsub', unsub)
-        cancel_handler = CommandHandler('cancel', cancel)
-        help_handler = CommandHandler('help', help)
-        quote_handler = CommandHandler('quote', quote)
 
-        dispatcher.add_handler(gag_handler)
-        dispatcher.add_handler(coffee_handler)
-        dispatcher.add_handler(sub_handler)
-        dispatcher.add_handler(unsub_handler)
-        dispatcher.add_handler(cancel_handler)
-        dispatcher.add_handler(help_handler)
-        dispatcher.add_handler(quote_handler)
-        updater.start_polling()
-        logger.info("Starting bot...")
-        return updater
-    return None
+    updater = Updater(token=os.environ['TELEGRAM_BOT_API_KEY'], use_context=True)
+    restore_data(updater.bot)
+    dispatcher = updater.dispatcher
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    
+    gag_handler = MessageHandler(Filters.text & (~Filters.command), gag)
+    coffee_handler = CommandHandler('coffee', coffee)
+    sub_handler = CommandHandler('sub', sub)
+    unsub_handler = CommandHandler('unsub', unsub)
+    cancel_handler = CommandHandler('cancel', cancel)
+    help_handler = CommandHandler('help', help)
+    quote_handler = CommandHandler('quote', quote)
+
+    dispatcher.add_handler(gag_handler)
+    dispatcher.add_handler(coffee_handler)
+    dispatcher.add_handler(sub_handler)
+    dispatcher.add_handler(unsub_handler)
+    dispatcher.add_handler(cancel_handler)
+    dispatcher.add_handler(help_handler)
+    dispatcher.add_handler(quote_handler)
+    dispatcher.add_error_handler(error_handler)
+    updater.start_polling()
+    logger.info("Starting bot...")
+    return updater
 
 def sendNotification(bot, message):
     global logger, subscribers
@@ -69,8 +109,37 @@ Hey fellow Coffee Lover\! Here are the commands you can use:
 `/help` \- see this very helpful helping help\.halp\.haaaalp\!ha\#aA@2\.D\.\.\. rebooting in 3\.\.2\.\.1\.\. 🖖🏻
                                  ''')
 
+def error_handler(update, context):
+    global logger, coffeeChatID
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    try:
+        raise context.error
+    except telegram.error.Unauthorized:
+        logger.info((update.message.from_user.username))
+        chat_id = coffeeChatID
+        if coffeeChatID is None:
+            chat_id = update.message.chat_id
+        context.bot.send_message(chat_id=chat_id,
+                                 text="I cannot send a message to you @{} :(\nPlease first click me and start a conversation!\nThat way you'll allow me to speak to you :)".format(update.message.from_user.username))
+        # remove update.message.chat_id from conversation list
+    except telegram.error.BadRequest:
+        pass
+        # handle malformed requests - read more below!
+    except telegram.error.TimedOut:
+        pass
+        # handle slow connection problems
+    except telegram.error.NetworkError:
+        pass
+        # handle other connection problems
+    except telegram.error.ChatMigrated as e:
+        pass
+        # the chat_id of a group has changed, use e.new_chat_id instead
+    except telegram.error.TelegramError:
+        pass
+        # handle all other telegram related errors
+
 def coffee(update, context):
-    global logger, coffeeTime, subscribers, t10, t5, t0
+    global logger, coffeeTime, coffeeChatID, subscribers, t10, t5, t0, d
     logger.info("Command received")
     logger.info(update.message.text)
     if update.message.text == '/coffee' or update.message.text == '/coffee@kvbotbotbot':
@@ -100,14 +169,22 @@ def coffee(update, context):
         logger.info(coffeeTime)
     
     if coffeeTime:
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 parse_mode=telegram.ParseMode.MARKDOWN_V2,
-                                 text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
+        d['coffeeTime'] = coffeeTime
+        d.sync()
+        msg = context.bot.send_message(chat_id=update.effective_chat.id,
+                                       parse_mode=telegram.ParseMode.MARKDOWN_V2,
+                                       text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
+        d['coffeeChatID'] = update.effective_chat.id
+        d.sync()
+        context.bot.pin_chat_message(chat_id=update.effective_chat.id,
+                                     message_id=msg.message_id)
         # clear subscribers & add sender
         subscribers = []
         subscribers.append(update.effective_user.id)
         subscribers.append(update.effective_chat.id)
         subscribers = list(dict.fromkeys(subscribers))
+        d['subscribers'] = subscribers
+        d.sync()
         # set T-10 notification timer
         if t10 is not None:
             t10.cancel()
@@ -137,25 +214,30 @@ def coffee(update, context):
             t0.start()
 
 def sub(update, context):
-    global logger, subscribers
+    global logger, subscribers, d
     logger.info("Command received")
     subscribers.append(update.effective_user.id)
     subscribers = list(dict.fromkeys(subscribers))
+    d['subscribers'] = subscribers
+    d.sync()
     context.bot.send_message(chat_id=update.effective_user.id,
                              text="You are subscribed for the next Coffee Time! 😄")
 
 def unsub(update, context):
-    global logger, subscribers
+    global logger, subscribers, d
     logger.info("Command received")
     subscribers.remove(update.effective_user.id)
+    d['subscribers'] = subscribers
+    d.sync()
     context.bot.send_message(chat_id=update.effective_user.id,
                              text="You are unsubscribed from the next coffee event 😥")
 
 def cancel(update, context):
-    global logger, subscribers, t10, t5, t0, coffeeTime
+    global logger, subscribers, t10, t5, t0, coffeeTime, coffeeChatID, d
     logger.info("Command received")
-    sendNotification(context.bot, "Coffee time cancelled! 💔😭")
+    sendNotification(context.bot, "Coffee time cancelled\! 💔😭")
     subscribers = []
+    d['subscribers'] = None
     if t10 is not None:
         t10.cancel()
         t10 = None
@@ -166,6 +248,9 @@ def cancel(update, context):
         t0.cancel()
         t0 = None
     coffeeTime = None
+    d['coffeeTime'] = None
+    d['coffeeChatID'] = None
+    d.sync()
 
 def quote(update, context):
     global logger
