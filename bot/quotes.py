@@ -39,7 +39,7 @@ def quotes():
         "I like my coffee strong and my women weak.",
         "Coffee. Creative lighter fluid.",
         "A morning without coffee is like sleep.",
-        "Every morning I long to hold you…I need you, I wan…, your smell, your taste…ohhh coffee, I love you.",
+        "Every morning I long to hold you… I need you, I want your smell, your taste… ohhh coffee, I love you.",
         "Drink coffee! Do Stupid Things Faster with More Energy.",
         "Coffee! Is the planet shaking or is just me?",
         "How far behind would technology be, if no one ever discovered coffee?",
