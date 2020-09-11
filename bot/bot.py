@@ -18,12 +18,13 @@ logger = logging.getLogger(__name__)
 
 coffeeTime = None
 coffeeChatID = None
+coffeeMsg = None
 subscribers = []
 t10 = t5 = t0 = None
 d = None
 
 def restore_data(bot):
-    global coffeeTime, coffeeChatID, subscribers, t10, t5, t0, d
+    global coffeeTime, coffeeChatID, coffeeMsg, subscribers, t10, t5, t0, d
 
     d = shelve.open('coffee.db.bot')
 
@@ -31,6 +32,8 @@ def restore_data(bot):
         coffeeTime = d['coffeeTime']
     if 'coffeeChatID' in d:
         coffeeChatID = d['coffeeChatID']
+    if 'coffeeMsg' in d:
+        coffeeMsg = d['coffeeMsg']
     if 'subscribers' in d:
         subscribers = d['subscribers']
 
@@ -139,7 +142,7 @@ def error_handler(update, context):
         # handle all other telegram related errors
 
 def coffee(update, context):
-    global logger, coffeeTime, coffeeChatID, subscribers, t10, t5, t0, d
+    global logger, coffeeTime, coffeeChatID, coffeeMsg, subscribers, t10, t5, t0, d
     logger.info("Command received")
     logger.info(update.message.text)
     if update.message.text == '/coffee' or update.message.text == '/coffee@kvbotbotbot':
@@ -171,9 +174,10 @@ def coffee(update, context):
     if coffeeTime:
         d['coffeeTime'] = coffeeTime
         d.sync()
-        msg = context.bot.send_message(chat_id=update.effective_chat.id,
+        coffeeMsg = context.bot.send_message(chat_id=update.effective_chat.id,
                                        parse_mode=telegram.ParseMode.MARKDOWN_V2,
                                        text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
+        d['coffeeMsg'] = coffeeMsg
         d['coffeeChatID'] = update.effective_chat.id
         d.sync()
         context.bot.pin_chat_message(chat_id=update.effective_chat.id,
@@ -233,10 +237,14 @@ def unsub(update, context):
                              text="You are unsubscribed from the next coffee event 😥")
 
 def cancel(update, context):
-    global logger, subscribers, t10, t5, t0, coffeeTime, coffeeChatID, d
+    global logger, subscribers, t10, t5, t0, coffeeTime, coffeeChatID, coffeeMsg, d
     logger.info("Command received")
     sendNotification(context.bot, "Coffee time cancelled\! 💔😭")
+    if coffeeMsg:
+        context.bot.unpin_chat_message(chat_id=coffeeChatID)
     subscribers = []
+    coffeeChatID = None
+    coffeeMsg = None
     d['subscribers'] = None
     if t10 is not None:
         t10.cancel()
@@ -250,6 +258,7 @@ def cancel(update, context):
     coffeeTime = None
     d['coffeeTime'] = None
     d['coffeeChatID'] = None
+    d['coffeeMsg'] = None
     d.sync()
 
 def quote(update, context):
