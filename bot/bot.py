@@ -176,7 +176,7 @@ def coffee(update, context):
         coffeeMsg = context.bot.send_message(chat_id=update.effective_chat.id,
                                        parse_mode=telegram.ParseMode.MARKDOWN_V2,
                                        text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
-        coffeeChatID = coffeeMsg.message_id
+        coffeeChatID = update.effective_chat.id
         d['coffeeMsg'] = coffeeMsg.message_id
         d['coffeeChatID'] = coffeeChatID
         d.sync()
@@ -241,18 +241,22 @@ def cancel(update, context):
     logger.info("Command received")
     sendNotification(context.bot, "Coffee time cancelled\! 💔😭")
     if coffeeMsg:
+        logger.info("coffeeChatID: {}".format(coffeeChatID))
         context.bot.unpin_chat_message(chat_id=coffeeChatID)
     subscribers = []
     coffeeChatID = None
     coffeeMsg = None
     d['subscribers'] = None
     if t10 is not None:
+        logger.info('Cancelling T-10')
         t10.cancel()
         t10 = None
     if t5 is not None:
+        logger.info('Cancelling T-5')
         t5.cancel()
         t5 = None
     if t0 is not None:
+        logger.info('Cancelling T-0')
         t0.cancel()
         t0 = None
     coffeeTime = None
