@@ -91,7 +91,6 @@ def Init():
 
 def sendNotification(bot, message):
     global logger, subscribers
-    logger.info("HERE")
     for subscriber in subscribers:
         bot.send_message(chat_id=subscriber,
                          parse_mode=telegram.ParseMode.MARKDOWN_V2,
@@ -177,8 +176,9 @@ def coffee(update, context):
         coffeeMsg = context.bot.send_message(chat_id=update.effective_chat.id,
                                        parse_mode=telegram.ParseMode.MARKDOWN_V2,
                                        text="New Coffee Time Announcement\!\!\nCoffee gathering at *{:0>2d}:{:0>2d}*\nSubscribe with `/sub` to receive notification\!".format(coffeeTime.hour, coffeeTime.minute))
+        coffeeChatID = coffeeMsg.message_id
         d['coffeeMsg'] = coffeeMsg.message_id
-        d['coffeeChatID'] = update.effective_chat.id
+        d['coffeeChatID'] = coffeeChatID
         d.sync()
         context.bot.pin_chat_message(chat_id=update.effective_chat.id,
                                      message_id=coffeeMsg.message_id)
