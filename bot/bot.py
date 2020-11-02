@@ -96,6 +96,10 @@ def sendNotification(bot, message):
                          parse_mode=telegram.ParseMode.MARKDOWN_V2,
                          text=message)
 
+def sendNotificationAndExecute(bot, message, fn):
+    sendNotification(bot, message)
+    fn()
+
 def help(update, context):
     global logger
     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -214,7 +218,7 @@ def coffee(update, context):
         secondsUntilNotification = (coffeeTime - now).total_seconds()
         logger.info("Seconds until T-0: {}".format(secondsUntilNotification))
         if secondsUntilNotification > 0:
-            t0 = Timer(secondsUntilNotification, sendNotification, (context.bot, "Coffee Time\! ☕☕☕"))
+            t0 = Timer(secondsUntilNotification, sendNotificationAndExecute, (context.bot, "Coffee Time\! ☕☕☕", lambda: context.bot.unpin_chat_message(chat_id=coffeeChatID)))
             t0.start()
 
 def sub(update, context):
