@@ -8,6 +8,6 @@ py==1.10.0
 pyparsing==2.4.7
 pytest==6.0.1
 python-telegram-bot==13.0
-requests==2.22.0
+requests==2.31.0
 toml==0.10.1
 tornado==6.0.4
